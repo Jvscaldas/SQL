@@ -29,7 +29,7 @@ FOREIGN KEY (projects_id) REFERENCES projects(id)
 )
 
 ALTER TABLE users
-ALTER COLUMN password VARCHAR(8) 
+ALTER COLUMN password VARCHAR(8)    
 
 ALTER TABLE users
 DROP CONSTRAINT unique_user
@@ -100,3 +100,35 @@ SELECT name, description, date,
 '79.85' AS  custo_total 
 FROM projects
 WHERE name LIKE '%Manutenção%'
+
+INSERT INTO users (name, username, password, email) VALUES
+('Joao', 'Ti_joao', '123mudar', 'joao@empresa.com')
+
+INSERT INTO projects(name, description, date) VALUES
+('Atualização de Sistemas', 'Modificação de Sistemas Operacionais nos PCs', '2014-09-12')
+
+INSERT INTO users_has_projects VALUES
+(6, NULL),
+(NULL, 10004)
+
+SELECT * FROM users_has_projects
+
+SELECT users.id, users.name, users.email, projects.description, projects.date
+FROM users_has_projects
+INNER JOIN users 
+ON users.id = users_has_projects.users_id
+INNER JOIN projects
+ON projects.id = users_has_projects.projects_id
+WHERE projects.name = 'Re-folha'
+
+SELECT projects.name 
+FROM users
+RIGHT OUTER JOIN projects
+ON projects.id = users.id
+WHERE users.id IS NULL
+
+SELECT users.name
+FROM projects
+RIGHT OUTER JOIN users
+ON users.id = projects.id
+WHERE projects.id IS NULL
