@@ -213,3 +213,40 @@ SELECT nome,
 logradouro + '' + CAST(num AS VARCHAR(5)) AS endereço_completo, SUBSTRING(cep, 1, 5) + '-' +  SUBSTRING(cep, 6, 4) AS cep
 FROM cliente 
 WHERE num_cadastro = 5503 OR num_cadastro = 5505
+
+-- Consultar num_cadastro do cliente, nome do cliente, data_locacao 
+-- (Formato dd/mm/aaaa), Qtd_dias_alugado (total de dias que o filme ficou
+-- alugado), titulo do filme, ano do filme da locação do cliente cujo nome 
+-- inicia com Matilde
+
+SELECT c.num_cadastro, c.nome, l.data_locacao, f.titulo, f.ano, 
+DATEDIFF(DAY, data_locacao, data_devolucao) AS Qtd_dias_alugado
+FROM locacao l
+INNER JOIN cliente c
+ON c.num_cadastro = l.cliente_num_cadastro
+FULL OUTER JOIN filme f
+ON f.id = l.dvd_num
+WHERE c.nome LIKE '%Matilde%'
+
+-- Consultar nome da estrela, nome_real da estrela, 
+-- título do filme dos filmes cadastrados do ano de 2015
+
+SELECT e.nome, e.nome_real, f.titulo 
+FROM filme_estrela fe
+INNER JOIN estrela e
+ON e.id = fe.id_estrela
+INNER JOIN filme f
+ON f.id = fe.id_filme
+WHERE f.ano = '2015' 
+
+SELECT f.titulo, CONVERT(CHAR(10),dvd.data_fabricacao, 103) AS dt_fabri,
+CASE WHEN (DATEDIFF(YEAR, f.ano, GETDATE()) > 6) THEN 
+			DATEDIFF(YEAR, f.ano, GETDATE()) + ' anos'
+ELSE
+			DATEDIFF(YEAR, f.ano, GETDATE()) 
+END AS dt_diff
+FROM dvd 
+INNER JOIN filme f
+ON f.id = dvd.id_filme
+
+SELECT * FROM locacao
