@@ -221,11 +221,13 @@ WHERE num_cadastro = 5503 OR num_cadastro = 5505
 
 SELECT c.num_cadastro, c.nome, l.data_locacao, f.titulo, f.ano, 
 DATEDIFF(DAY, data_locacao, data_devolucao) AS Qtd_dias_alugado
-FROM locacao l
+FROM dvd 
+INNER JOIN locacao l
+ON dvd.num = l.dvd_num
 INNER JOIN cliente c
-ON c.num_cadastro = l.cliente_num_cadastro
-FULL OUTER JOIN filme f
-ON f.id = l.dvd_num
+ON l.cliente_num_cadastro = c.num_cadastro
+INNER JOIN filme f
+ON f.id = dvd.id_filme
 WHERE c.nome LIKE '%Matilde%'
 
 -- Consultar nome da estrela, nome_real da estrela, 
@@ -240,13 +242,49 @@ ON f.id = fe.id_filme
 WHERE f.ano = '2015' 
 
 SELECT f.titulo, CONVERT(CHAR(10),dvd.data_fabricacao, 103) AS dt_fabri,
-CASE WHEN (DATEDIFF(YEAR, f.ano, GETDATE()) > 6) THEN 
-			DATEDIFF(YEAR, f.ano, GETDATE()) + ' anos'
+CASE WHEN (YEAR(GETDATE()) - f.ano > 6) THEN 
+			CAST(YEAR(GETDATE()) - f.ano AS VARCHAR(4)) + ' anos'
 ELSE
-			DATEDIFF(YEAR, f.ano, GETDATE()) 
+			CAST(YEAR(GETDATE()) - f.ano AS VARCHAR(4))
 END AS dt_diff
-FROM dvd 
-INNER JOIN filme f
-ON f.id = dvd.id_filme
+FROM dvd, filme f 
+WHERE f.id = dvd.id_filme
 
-SELECT * FROM locacao
+-- Consultar, num_cadastro do cliente, nome do cliente, titulo do filme, data_fabricação
+-- do dvd, valor da locação, dos dvds que tem a maior data de fabricação dentre todos os
+-- cadastrados.
+SELECT c.num_cadastro, c.nome, f.titulo, d.data_fabricacao, l.valor
+FROM cliente c, filme f, dvd d, locacao l
+WHERE c.num_cadastro = l.cliente_num_cadastro
+	AND d.num = l.dvd_num
+
+-- Consultar, num_cadastro do cliente, nome do cliente, data de locação
+-- (Formato DD/MM/AAAA) e a quantidade de DVD´s alugados por cliente 
+-- (Chamar essa coluna de qtd), por data de locação
+SELECT c.num_cadastro, c.nome, CONVERT(CHAR(10), l.data_locacao, 103) AS data_locacao,
+COUNT(l.dvd_num) AS qtd
+FROM cliente c, locacao l
+WHERE c.num_cadastro = l.cliente_num_cadastro
+GROUP BY c.num_cadastro, c.nome, l.data_locacao
+ORDER BY l.data_locacao
+
+-- Consultar, num_cadastro do cliente, nome do cliente, data de locação
+-- (Formato DD/MM/AAAA) e a valor total de todos os dvd´s alugados 
+-- (Chamar essa coluna de valor_total), por data de locação
+SELECT c.num_cadastro, c.nome, CONVERT(CHAR(10), l.data_locacao, 103) AS data_locacao,
+SUM(l.valor) AS valor_total
+FROM cliente c, locacao l
+WHERE c.num_cadastro = l.cliente_num_cadastro
+GROUP BY c.num_cadastro, c.nome, l.data_locacao
+ORDER BY l.data_locacao
+
+-- Consultar, num_cadastro do cliente, nome do cliente, 
+-- Endereço concatenado de logradouro e numero como Endereco, data de locação 
+-- (Formato DD/MM/AAAA) dos clientes que alugaram mais de 2 filmes simultaneamente
+SELECT c.num_cadastro, c.nome, 
+c.logradouro + '' + CAST(num AS VARCHAR(5)) AS endereço_completo, CONVERT(CHAR(10), l.data_locacao, 103) AS data_locacao,
+COUNT(l.dvd_num) AS qtd
+FROM cliente c, locacao l
+WHERE c.num_cadastro = l.cliente_num_cadastro
+GROUP BY c.num_cadastro, c.nome, c.logradouro, c.num, l.data_locacao
+HAVING SUM(l.dvd_num) > 2
