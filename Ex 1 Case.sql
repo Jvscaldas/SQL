@@ -111,8 +111,6 @@ INSERT INTO users_has_projects VALUES
 (6, NULL),
 (NULL, 10004)
 
-SELECT * FROM users_has_projects
-
 SELECT users.id, users.name, users.email, projects.description, projects.date
 FROM users_has_projects
 INNER JOIN users 
@@ -121,14 +119,31 @@ INNER JOIN projects
 ON projects.id = users_has_projects.projects_id
 WHERE projects.name = 'Re-folha'
 
-SELECT projects.name 
-FROM users
-RIGHT OUTER JOIN projects
-ON projects.id = users.id
-WHERE users.id IS NULL
+SELECT p.name 
+FROM users_has_projects uhp
+RIGHT OUTER JOIN projects p
+ON p.id = uhp.projects_id
+WHERE uhp.projects_id IS NULL
 
 SELECT users.name
-FROM projects
-RIGHT OUTER JOIN users
-ON users.id = projects.id
-WHERE projects.id IS NULL
+FROM users
+LEFT OUTER JOIN users_has_projects uhp
+ON users.id = uhp.users_id
+WHERE uhp.users_id IS NULL
+
+-- Quantos projetos não tem usuários associados a ele. 
+-- A coluna deve chamar qty_projects_no_users
+SELECT COUNT(p.id) AS qty_projects_no_users
+FROM projects p LEFT OUTER JOIN users_has_projects uhp
+ON p.id = uhp.projects_id
+WHERE uhp.users_id IS NULL
+
+-- Id do projeto, nome do projeto, qty_users_project 
+-- (quantidade de usuários por projeto) em ordem alfabética crescente pelo nome do projeto
+SELECT p.id, p.name,
+COUNT(u.id) AS qty_users_project 
+FROM projects p, users u, users_has_projects uhp
+WHERE u.id = uhp.users_id
+	AND p.id = uhp.projects_id
+GROUP BY p.id, p.name, u.id
+ORDER BY p.name ASC
